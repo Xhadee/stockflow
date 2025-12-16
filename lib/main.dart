@@ -19,7 +19,7 @@ class StockFlowApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'StockFlow',
       theme: ThemeData(useMaterial3: true),
-      home:  OrderListScreen(),
+      home:  WelcomeScreen(),
     );
   }
 }
