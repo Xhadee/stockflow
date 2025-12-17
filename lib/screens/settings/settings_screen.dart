@@ -1,69 +1,57 @@
 import 'package:flutter/material.dart';
-import '../auth/login_screen.dart'; // Pour la déconnexion
-import 'user_management_screen.dart'; // Étape suivante : Gestion des utilisateurs
+import 'package:stockflow/screens/products/product_list_screen.dart';
+import 'package:stockflow/widgets/setting_tile.dart';
+import '../dashboard/dashboard_screen.dart';
+import '../inventory/movement_list_screen.dart';
+import 'user_management_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   static const String routeName = '/settings';
 
   const SettingsScreen({super.key});
 
-  // Palette de couleurs (maintenue)
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  // Palette StockFlow
   final Color primaryColor = const Color(0xFF18534F);
   final Color secondaryColor = const Color(0xFF226D68);
   final Color backgroundColor = const Color(0xFFECF8F6);
-  final Color buttonColor = const Color(0xFFD6955B);
   final Color accentColor = const Color(0xFFFEEAA1);
+  final Color buttonColor = const Color(0xFFD6955B);
 
-  // Widget utilitaire pour créer des sections de paramètres
-  Widget _buildSettingsSection({
-    required BuildContext context,
-    required String title,
-    required List<Widget> tiles,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 25.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
-              ),
-            ),
-          ),
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            margin: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Column(
-              children: tiles,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  int _currentIndex = 3; // Paramètres
 
-  // Widget utilitaire pour créer un élément de paramètre cliquable
-  Widget _buildSettingsTile({
-    required String title,
-    required IconData icon,
-    VoidCallback? onTap,
-    String? subtitle,
-    Color iconColor = const Color(0xFF226D68),
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(title, style: TextStyle(color: primaryColor)),
-      subtitle: subtitle != null ? Text(subtitle, style: TextStyle(color: secondaryColor.withOpacity(0.7))) : null,
-      trailing: onTap != null ? Icon(Icons.chevron_right, color: buttonColor) : null,
-      onTap: onTap,
-    );
+  void _onBottomNavTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProductListScreen()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => MovementListScreen()),
+        );
+        break;
+      case 3:
+      // Déjà sur paramètres
+        break;
+    }
   }
 
   @override
@@ -71,94 +59,97 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Paramètres', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        title: const Text('Paramètres'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: primaryColor,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // --- Section COMPTE ET ACCÈS ---
-            _buildSettingsSection(
-              context: context,
-              title: 'Compte et Accès',
-              tiles: [
-                _buildSettingsTile(
-                  title: 'Gérer les Utilisateurs',
-                  icon: Icons.people_alt,
+      body: Stack(
+        children: [
+          // Décoration
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.35),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                settingsTile(
+                  icon: Icons.person,
+                  title: 'Profil',
+                  subtitle: 'Modifier vos informations personnelles',
                   onTap: () {
-                    // Navigation vers l'écran de gestion des utilisateurs
+                    // TODO: Page Profil
+                  },
+                ),
+                settingsTile(
+                  icon: Icons.group,
+                  title: 'Gestion des utilisateurs',
+                  subtitle: 'Ajouter, modifier ou supprimer des utilisateurs',
+                  onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const UserManagementScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const UserManagementScreen(),
+                      ),
                     );
                   },
                 ),
-                _buildSettingsTile(
-                  title: 'Mon Profil',
-                  icon: Icons.person,
-                  subtitle: 'Mettre à jour le mot de passe et l\'email',
+                settingsTile(
+                  icon: Icons.notifications,
+                  title: 'Notifications',
+                  subtitle: 'Gérer les notifications',
                   onTap: () {
-                    // TODO: Naviguer vers l'édition du profil utilisateur
+                    // TODO: Page Notifications
+                  },
+                ),
+                settingsTile(
+                  icon: Icons.info,
+                  title: 'À propos',
+                  subtitle: 'Version de l’application et informations',
+                  onTap: () {
+                    // TODO: Page À propos
                   },
                 ),
               ],
             ),
-
-            // --- Section GESTION DES DONNÉES ---
-            _buildSettingsSection(
-              context: context,
-              title: 'Gestion des Données',
-              tiles: [
-                _buildSettingsTile(
-                  title: 'Unités de Mesure',
-                  icon: Icons.scale,
-                  subtitle: 'Gérer les unités de stock (Kg, L, Pièce, etc.)',
-                  onTap: () {
-                    // TODO: Naviguer vers la gestion des unités
-                  },
-                ),
-                _buildSettingsTile(
-                  title: 'Configuration des Alertes',
-                  icon: Icons.notification_important,
-                  subtitle: 'Seuil de stock bas (ex: < 10 articles)',
-                  onTap: () {
-                    // TODO: Naviguer vers la configuration des seuils d'alerte
-                  },
-                ),
-              ],
-            ),
-
-            // --- Section SÉCURITÉ ET DIVERS ---
-            _buildSettingsSection(
-              context: context,
-              title: 'Sécurité et Divers',
-              tiles: [
-                _buildSettingsTile(
-                  title: 'Historique des Connexions',
-                  icon: Icons.security,
-                  onTap: () {
-                    // TODO: Naviguer vers l'historique de sécurité
-                  },
-                ),
-                _buildSettingsTile(
-                  title: 'Déconnexion',
-                  icon: Icons.logout,
-                  iconColor: Colors.redAccent,
-                  onTap: () {
-                    // Déconnexion complète
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) =>  LoginScreen()),
-                          (Route<dynamic> route) => false,
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onBottomNavTapped,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: secondaryColor,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt),
+            label: 'Produits',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2),
+            label: 'Inventaire',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Paramètres',
+          ),
+        ],
       ),
     );
   }
+
 }

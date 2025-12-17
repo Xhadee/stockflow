@@ -1,86 +1,76 @@
 import 'package:flutter/material.dart';
 
 class AddEditOrderScreen extends StatefulWidget {
-  // Le paramètre 'order' est optionnel. S'il est fourni, c'est une modification.
-  final Map<String, dynamic>? order;
+  static const String routeName = '/add-edit-order';
 
-  const AddEditOrderScreen({this.order, super.key});
+  final Map<String, dynamic>? order; // null si création
+
+  const AddEditOrderScreen({super.key, this.order});
 
   @override
-  _AddEditOrderScreenState createState() => _AddEditOrderScreenState();
+  State<AddEditOrderScreen> createState() => _AddEditOrderScreenState();
 }
 
 class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Contrôleurs et variables d'état
-  late TextEditingController _customerController;
-  late TextEditingController _numberController;
-  late String _selectedStatus;
+  // Controllers
+  final TextEditingController _quantityController = TextEditingController();
 
-  // Liste des statuts possibles
-  final List<String> _statuses = ['Brouillon', 'Confirmée', 'En préparation', 'Expédiée', 'Annulée'];
-
-  // Palette de couleurs
+  // Palette StockFlow
   final Color primaryColor = const Color(0xFF18534F);
   final Color secondaryColor = const Color(0xFF226D68);
   final Color backgroundColor = const Color(0xFFECF8F6);
+  final Color accentColor = const Color(0xFFFEEAA1);
   final Color buttonColor = const Color(0xFFD6955B);
 
-  bool get isEditing => widget.order != null;
+  String _selectedClient = 'Client A';
+  String _selectedProduct = 'Produit A';
+  int _quantity = 1;
+
+  // Données mock
+  final List<String> _clients = ['Client A', 'Client B', 'Client C'];
+  final List<String> _products = ['Produit A', 'Produit B', 'Produit C'];
+
+  int _calculateTotal() {
+    // Mock : 10€ par unité
+    return _quantity * 10;
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: secondaryColor),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding:
+      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    // Initialisation des contrôleurs avec les données existantes si en mode édition
-    _customerController = TextEditingController(text: widget.order?['customer'] ?? '');
-    _numberController = TextEditingController(text: widget.order?['number'] ?? 'ORD-${DateTime.now().millisecondsSinceEpoch}');
-    _selectedStatus = widget.order?['status'] ?? 'Brouillon';
+    if (widget.order != null) {
+      _selectedClient = widget.order!['client'];
+      _selectedProduct = widget.order!['product'];
+      _quantity = widget.order!['quantity'];
+      _quantityController.text = _quantity.toString();
+    }
   }
 
   @override
   void dispose() {
-    _customerController.dispose();
-    _numberController.dispose();
+    _quantityController.dispose();
     super.dispose();
-  }
-
-  // Style des champs de texte
-  InputDecoration _inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: secondaryColor.withOpacity(0.8)),
-      prefixIcon: Icon(icon, color: secondaryColor),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: primaryColor, width: 2)),
-    );
-  }
-
-  void _saveOrder() {
-    if (_formKey.currentState!.validate()) {
-      // Logique de sauvegarde/mise à jour
-      final String action = isEditing ? 'mise à jour' : 'créée';
-
-      // Simulation de l'objet Order complet
-      final Map<String, dynamic> newOrder = {
-        'number': _numberController.text,
-        'customer': _customerController.text,
-        'status': _selectedStatus,
-        'id': widget.order?['id'] ?? UniqueKey().toString(),
-        'total': widget.order?['total'] ?? 0.0,
-      };
-
-      // Feedback
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Commande #${newOrder['number']} $action avec succès.'),
-          backgroundColor: secondaryColor,
-        ),
-      );
-      Navigator.pop(context);
-    }
   }
 
   @override
@@ -88,101 +78,127 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        title: Text(isEditing ? 'Modifier Commande' : 'Créer Nouvelle Commande', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(widget.order == null ? 'Nouvelle commande' : 'Modifier commande'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: primaryColor,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // --- Champ Numéro de Commande ---
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20.0),
-                child: TextFormField(
-                  controller: _numberController,
-                  decoration: _inputDecoration('Numéro de Commande', Icons.confirmation_number),
-                  readOnly: true, // Souvent généré automatiquement
-                ),
+      body: Stack(
+        children: [
+          // Décoration
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.35),
+                shape: BoxShape.circle,
               ),
-
-              // --- Champ Client ---
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20.0),
-                child: TextFormField(
-                  controller: _customerController,
-                  decoration: _inputDecoration('Nom du Client', Icons.person),
-                  validator: (value) => value == null || value.isEmpty ? 'Le nom du client est requis' : null,
-                ),
-              ),
-
-              // --- Sélecteur de Statut ---
-              Container(
-                margin: const EdgeInsets.only(bottom: 20),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.1), blurRadius: 10)],
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: _selectedStatus,
-                  decoration: const InputDecoration(
-                    labelText: 'Statut de la Commande',
-                    prefixIcon: Icon(Icons.check_circle_outline, color: Color(0xFF226D68)),
-                    border: InputBorder.none,
-                  ),
-                  items: _statuses.map((String status) {
-                    return DropdownMenuItem<String>(
-                      value: status,
-                      child: Text(status),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedStatus = newValue!;
-                    });
-                  },
-                ),
-              ),
-
-              // --- Section Articles (Simulation) ---
-              const SizedBox(height: 10),
-              Text('Articles (Ajout/Modification nécessite une section dédiée)', style: TextStyle(color: secondaryColor)),
-              Container(
-                margin: const EdgeInsets.only(top: 10, bottom: 30),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: secondaryColor.withOpacity(0.2)),
-                ),
-                child: Center(
-                  child: Text('Liste des articles commandés', style: TextStyle(color: buttonColor)),
-                ),
-              ),
-
-
-              // --- Bouton de sauvegarde ---
-              ElevatedButton(
-                onPressed: _saveOrder,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                ),
-                child: Text(
-                  isEditing ? 'Sauvegarder la Commande' : 'Créer la Commande',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Client
+                    DropdownButtonFormField<String>(
+                      value: _selectedClient,
+                      decoration: _inputDecoration('Client', Icons.person),
+                      items: _clients
+                          .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e),
+                      ))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedClient = val);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Produit
+                    DropdownButtonFormField<String>(
+                      value: _selectedProduct,
+                      decoration: _inputDecoration('Produit', Icons.inventory_2),
+                      items: _products
+                          .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e),
+                      ))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedProduct = val);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Quantité
+                    TextFormField(
+                      controller: _quantityController,
+                      keyboardType: TextInputType.number,
+                      decoration: _inputDecoration('Quantité', Icons.confirmation_num),
+                      onChanged: (val) {
+                        setState(() {
+                          _quantity = int.tryParse(val) ?? 1;
+                        });
+                      },
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Veuillez entrer une quantité';
+                        if (int.tryParse(val) == null) return 'Quantité invalide';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Total
+                    Text(
+                      'Total : ${_calculateTotal()} €',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Bouton Enregistrer
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 6,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          // TODO: Sauvegarder via BLoC / Firestore
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Text(
+                        'Enregistrer',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

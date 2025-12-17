@@ -1,78 +1,60 @@
 import 'package:flutter/material.dart';
 
 class AddEditOrganizationScreen extends StatefulWidget {
-  final Map<String, String>? organization; // null si ajout, non null si modification
+  static const String routeName = '/add-edit-organization';
 
-  const AddEditOrganizationScreen({this.organization, super.key});
+  final Map<String, dynamic>? organization; // null si création
+
+  const AddEditOrganizationScreen({super.key, this.organization});
 
   @override
-  _AddEditOrganizationScreenState createState() => _AddEditOrganizationScreenState();
+  State<AddEditOrganizationScreen> createState() => _AddEditOrganizationScreenState();
 }
 
 class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _currencyController = TextEditingController();
 
-  // Contrôleurs
-  late TextEditingController _nameController;
-  late TextEditingController _locationController;
-  late TextEditingController _contactController;
-
-  // Palette de couleurs
+  // Palette StockFlow
   final Color primaryColor = const Color(0xFF18534F);
   final Color secondaryColor = const Color(0xFF226D68);
   final Color backgroundColor = const Color(0xFFECF8F6);
+  final Color accentColor = const Color(0xFFFEEAA1);
   final Color buttonColor = const Color(0xFFD6955B);
 
-  bool get isEditing => widget.organization != null;
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: secondaryColor),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    // Initialiser les contrôleurs
-    _nameController = TextEditingController(text: widget.organization?['name'] ?? '');
-    _locationController = TextEditingController(text: widget.organization?['location'] ?? '');
-    _contactController = TextEditingController(text: widget.organization?['contact'] ?? '');
+    if (widget.organization != null) {
+      _nameController.text = widget.organization!['name'];
+      _currencyController.text = widget.organization!['currency'];
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _locationController.dispose();
-    _contactController.dispose();
+    _currencyController.dispose();
     super.dispose();
-  }
-
-  // Style des champs de texte
-  InputDecoration _inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: secondaryColor.withOpacity(0.8)),
-      prefixIcon: Icon(icon, color: secondaryColor),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: primaryColor, width: 2)),
-    );
-  }
-
-  void _saveOrganization() {
-    if (_formKey.currentState!.validate()) {
-      final String action = isEditing ? 'mise à jour' : 'ajoutée';
-      final String orgName = _nameController.text;
-
-      // Logique de sauvegarde (simulée) : Enregistrer les données...
-
-      // Feedback visuel
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Organisation "$orgName" $action avec succès.'),
-          backgroundColor: secondaryColor,
-        ),
-      );
-
-      // Retour à la liste
-      Navigator.pop(context);
-    }
   }
 
   @override
@@ -80,96 +62,112 @@ class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        title: Text(
-          isEditing ? 'Modifier l\'Organisation' : 'Ajouter une Organisation',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(widget.organization == null ? 'Nouvelle organisation' : 'Modifier organisation'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: primaryColor,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // --- Champ Nom de l'Organisation ---
-              _buildTextField(
-                controller: _nameController,
-                label: 'Nom de l\'Organisation',
-                icon: Icons.factory,
-                validator: (value) => value == null || value.isEmpty ? 'Le nom est requis' : null,
+      body: Stack(
+        children: [
+          // Décoration
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.35),
+                shape: BoxShape.circle,
               ),
-
-              // --- Champ Localisation ---
-              _buildTextField(
-                controller: _locationController,
-                label: 'Localisation/Ville',
-                icon: Icons.location_on,
-                validator: (value) => null, // Optionnel
-              ),
-
-              // --- Champ Contact Principal ---
-              _buildTextField(
-                controller: _contactController,
-                label: 'Contact (Email ou Téléphone)',
-                icon: Icons.contact_mail,
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) => null, // Optionnel
-              ),
-
-              const SizedBox(height: 30),
-
-              // Bouton de sauvegarde
-              ElevatedButton(
-                onPressed: _saveOrganization,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                child: Text(
-                  isEditing ? 'Sauvegarder les Modifications' : 'Ajouter l\'Organisation',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Nom organisation
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: _inputDecoration('Nom de l’organisation', Icons.business),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Veuillez entrer un nom';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
 
-  // Widget utilitaire pour les champs de texte
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    required FormFieldValidator<String> validator,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 5),
+                    // Devise
+                    TextFormField(
+                      controller: _currencyController,
+                      decoration: _inputDecoration('Devise', Icons.monetization_on),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Veuillez entrer une devise';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Bouton Enregistrer
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 6,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          // TODO: Sauvegarder via BLoC / Firestore
+                          Navigator.pop(context, {
+                            'name': _nameController.text,
+                            'currency': _currencyController.text,
+                          });
+                        }
+                      },
+                      child: const Text(
+                        'Enregistrer',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    // Bouton Annuler
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: primaryColor, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        backgroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Annuler',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: _inputDecoration(label, icon),
       ),
     );
   }
