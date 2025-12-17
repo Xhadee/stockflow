@@ -1,88 +1,139 @@
 import 'package:flutter/material.dart';
-// 🛑 CORRECTION ICI 🛑 : Ajout du point-virgule et utilisation du nom correct si vous avez suivi la suggestion
-import 'add_edit_screen_product.dart';
+import 'package:stockflow/screens/products/add_edit_product_screen.dart';
+import 'package:stockflow/screens/settings/settings_screen.dart';
+import '../dashboard/dashboard_screen.dart';
+import '../inventory/movement_list_screen.dart';
 import 'product_detail_screen.dart';
-import '../../models/product_model.dart';
 
 class ProductListScreen extends StatefulWidget {
-  static const String routeName = '/products';
+  static const String routeName = '/product-list';
+
+  const ProductListScreen({super.key});
 
   @override
-  _ProductListScreenState createState() => _ProductListScreenState();
+  State<ProductListScreen> createState() => _ProductListScreenState();
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
-  // Palette de couleurs (maintenue)
+  // Palette StockFlow
   final Color primaryColor = const Color(0xFF18534F);
   final Color secondaryColor = const Color(0xFF226D68);
   final Color backgroundColor = const Color(0xFFECF8F6);
   final Color accentColor = const Color(0xFFFEEAA1);
   final Color buttonColor = const Color(0xFFD6955B);
 
-  // Données de simulation (à remplacer par Firebase/API)
-  List<Product> products = [
-    Product(id: '1', name: 'T-shirt Coton Bleu', price: 15.99, quantity: 50, sku: 'TSCB-001'),
-    Product(id: '2', name: 'Jean Slim Noir', price: 45.00, quantity: 15, sku: 'JSN-002'),
-    Product(id: '3', name: 'Casquette Logo', price: 8.50, quantity: 5, sku: 'CL-003'), // Faible stock
-    Product(id: '4', name: 'Chaussures Cuir', price: 89.99, quantity: 100, sku: 'CC-004'),
+  int _currentIndex = 1; // Produits
+
+  // Mock products
+  List<Map<String, dynamic>> products = [
+    {
+      'name': 'Smartphone',
+      'category': 'Électronique',
+      'stock': 15,
+      'alertThreshold': 5,
+      'priceHT': 350,
+      'active': true
+    },
+    {
+      'name': 'T-shirt',
+      'category': 'Vêtements',
+      'stock': 50,
+      'alertThreshold': 10,
+      'priceHT': 15,
+      'active': true
+    },
+    {
+      'name': 'Jus de fruits',
+      'category': 'Alimentation',
+      'stock': 8,
+      'alertThreshold': 5,
+      'priceHT': 3,
+      'active': true
+    },
   ];
 
-  String _searchQuery = '';
+  void _onBottomNavTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
 
-  // Fonction pour construire une tuile de produit
-  Widget _buildProductTile(BuildContext context, Product product) {
-    // Vérification du stock bas
-    bool isLowStock = product.quantity < 10;
-
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-        side: isLowStock ? BorderSide(color: Colors.redAccent, width: 2) : BorderSide.none,
-      ),
-      child: ListTile(
-        onTap: () {
-          // Naviguer vers l'écran de détail
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
-          );
-        },
-        // Indicateur de stock (rond ou icône)
-        leading: CircleAvatar(
-          backgroundColor: isLowStock ? Colors.redAccent.withOpacity(0.9) : secondaryColor,
-          child: isLowStock
-              ? Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20)
-              : Text(
-            product.quantity.toString(),
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-        ),
-        title: Text(
-          product.name,
-          style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
-        ),
-        subtitle: Text(
-          'SKU: ${product.sku} | Prix: ${product.price.toStringAsFixed(2)} €',
-          style: TextStyle(color: secondaryColor.withOpacity(0.7)),
-        ),
-        trailing: isLowStock
-            ? Text('Stock bas !', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold))
-            : Icon(Icons.chevron_right, color: buttonColor),
-      ),
-    );
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+        break;
+      case 1:
+      // Produits déjà ici
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => MovementListScreen()),
+        );
+        break;
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        );
+        break;
+    }
   }
 
-  // Fonction de filtre
-  List<Product> get _filteredProducts {
-    if (_searchQuery.isEmpty) {
-      return products;
+  void _addOrEditProduct({Map<String, dynamic>? product}) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddEditProductScreen(
+          title: product == null ? 'Ajouter Produit' : 'Modifier Produit',
+          entity: product,
+          onSave: (data) {
+            print('Produit sauvegardé: $data');
+          },
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        if (product != null) {
+          final index = products.indexOf(product);
+          products[index] = result;
+        } else {
+          products.add(result);
+        }
+      });
     }
-    return products.where((product) {
-      return product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          product.sku.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+  }
+
+  void _deleteProduct(Map<String, dynamic> product) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Supprimer produit ?'),
+        content: Text('Voulez-vous vraiment supprimer "${product['name']}" ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                products.remove(product);
+              });
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Supprimer',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -90,79 +141,126 @@ class _ProductListScreenState extends State<ProductListScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        title: const Text('Gestion des Produits', style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 0, // Enlève l'ombre de l'AppBar
+        title: const Text('Produits'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: primaryColor,
+        elevation: 0,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Champ de recherche stylisé
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          Positioned(
+            top: -100,
+            right: -100,
             child: Container(
+              width: 240,
+              height: 240,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Rechercher par nom ou SKU...',
-                  hintStyle: TextStyle(color: secondaryColor.withOpacity(0.5)),
-                  prefixIcon: Icon(Icons.search, color: secondaryColor),
-                  border: InputBorder.none, // Enlever la bordure interne
-                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                ),
+                color: accentColor.withOpacity(0.35),
+                shape: BoxShape.circle,
               ),
             ),
           ),
-
-          // Liste des produits
-          Expanded(
-            child: _filteredProducts.isEmpty
-                ? Center(
-              child: Text(
-                _searchQuery.isEmpty ? 'Aucun produit en stock.' : 'Aucun résultat trouvé.',
-                style: TextStyle(color: secondaryColor, fontSize: 18),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: ListView.separated(
+                itemCount: products.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailScreen(product: product),
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withOpacity(0.12),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product['name'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                product['category'],
+                                style: TextStyle(
+                                  color: secondaryColor.withOpacity(0.8),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteProduct(product),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => _addOrEditProduct(product: product),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-            )
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: _filteredProducts.length,
-              itemBuilder: (context, index) {
-                return _buildProductTile(context, _filteredProducts[index]);
-              },
             ),
           ),
         ],
       ),
-
-      // Bouton flottant pour ajouter un nouveau produit
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Naviguer vers l'écran d'ajout (mode ajout)
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddEditProductScreen()),
-          );
-        },
         backgroundColor: buttonColor,
-        foregroundColor: Colors.white,
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: const Icon(Icons.add, size: 30),
+        onPressed: () => _addOrEditProduct(),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onBottomNavTapped,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: secondaryColor,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt),
+            label: 'Produits',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2),
+            label: 'Inventaire',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Paramètres',
+          ),
+        ],
       ),
     );
   }

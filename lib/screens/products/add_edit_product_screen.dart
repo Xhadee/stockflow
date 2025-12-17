@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 
-class AddEditOrganizationScreen extends StatefulWidget {
-  static const String routeName = '/add-edit-organization';
+class AddEditProductScreen extends StatefulWidget {
+  final String title; // Titre de l'écran
+  final Map<String, dynamic>? entity; // null si création
+  final Function(Map<String, dynamic>) onSave; // Callback pour sauvegarder
 
-  final Map<String, dynamic>? organization; // null si création
-
-  const AddEditOrganizationScreen({super.key, this.organization});
+  const AddEditProductScreen({
+    super.key,
+    required this.title,
+    this.entity,
+    required this.onSave,
+  });
 
   @override
-  State<AddEditOrganizationScreen> createState() => _AddEditOrganizationScreenState();
+  State<AddEditProductScreen> createState() => AddEditProductScreenState();
 }
 
-class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
+class AddEditProductScreenState extends State<AddEditProductScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _currencyController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
   // Palette StockFlow
   final Color primaryColor = const Color(0xFF18534F);
@@ -44,17 +49,28 @@ class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.organization != null) {
-      _nameController.text = widget.organization!['name'];
-      _currencyController.text = widget.organization!['currency'];
+    if (widget.entity != null) {
+      _nameController.text = widget.entity!['name'] ?? '';
+      _descriptionController.text = widget.entity!['description'] ?? '';
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _currencyController.dispose();
+    _descriptionController.dispose();
     super.dispose();
+  }
+
+  void _save() {
+    if (_formKey.currentState!.validate()) {
+      final result = {
+        'name': _nameController.text,
+        'description': _descriptionController.text,
+      };
+      widget.onSave(result);
+      Navigator.pop(context, result);
+    }
   }
 
   @override
@@ -62,7 +78,7 @@ class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text(widget.organization == null ? 'Nouvelle organisation' : 'Modifier organisation'),
+        title: Text(widget.title),
         backgroundColor: Colors.transparent,
         foregroundColor: primaryColor,
         elevation: 0,
@@ -90,10 +106,10 @@ class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Nom organisation
+                    // Nom
                     TextFormField(
                       controller: _nameController,
-                      decoration: _inputDecoration('Nom de l’organisation', Icons.business),
+                      decoration: _inputDecoration('Nom', Icons.edit),
                       validator: (val) {
                         if (val == null || val.isEmpty) return 'Veuillez entrer un nom';
                         return null;
@@ -101,14 +117,10 @@ class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Devise
+                    // Description
                     TextFormField(
-                      controller: _currencyController,
-                      decoration: _inputDecoration('Devise', Icons.monetization_on),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Veuillez entrer une devise';
-                        return null;
-                      },
+                      controller: _descriptionController,
+                      decoration: _inputDecoration('Description', Icons.description),
                     ),
                     const SizedBox(height: 30),
 
@@ -123,15 +135,7 @@ class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // TODO: Sauvegarder via BLoC / Firestore
-                          Navigator.pop(context, {
-                            'name': _nameController.text,
-                            'currency': _currencyController.text,
-                          });
-                        }
-                      },
+                      onPressed: _save,
                       child: const Text(
                         'Enregistrer',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -150,9 +154,7 @@ class _AddEditOrganizationScreenState extends State<AddEditOrganizationScreen> {
                         ),
                         backgroundColor: Colors.white,
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: () => Navigator.pop(context),
                       child: Text(
                         'Annuler',
                         style: TextStyle(

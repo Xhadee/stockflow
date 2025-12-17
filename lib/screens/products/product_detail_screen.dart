@@ -1,175 +1,138 @@
 import 'package:flutter/material.dart';
-import 'add_edit_screen_product.dart';
-import '../../models/product_model.dart';
+import 'add_edit_product_screen.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   static const String routeName = '/product-detail';
-  final Product product;
 
-  const ProductDetailScreen({required this.product, super.key});
+  final Map<String, dynamic> product;
 
-  // Palette de couleurs (maintenue)
+  const ProductDetailScreen({super.key, required this.product});
+
+  // Palette StockFlow
   final Color primaryColor = const Color(0xFF18534F);
   final Color secondaryColor = const Color(0xFF226D68);
   final Color backgroundColor = const Color(0xFFECF8F6);
+  final Color accentColor = const Color(0xFFFEEAA1);
   final Color buttonColor = const Color(0xFFD6955B);
 
-  // Widget pour afficher une ligne d'information stylisée
-  Widget _buildInfoRow(String label, String value, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: const Text('Détails produit'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: primaryColor,
+        elevation: 0,
+      ),
+      body: Stack(
         children: [
-          Icon(icon, color: secondaryColor, size: 24),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: secondaryColor.withOpacity(0.7),
-                ),
+          // Décoration
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.35),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 2),
-              SizedBox(
-                width: 250, // Limite la largeur pour que le texte long ne déborde pas
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Nom
+                  Text(
+                    product['name'] ?? 'Nom produit',
+                    style: const TextStyle(
+                        fontSize: 28, fontWeight: FontWeight.bold),
                   ),
-                ),
+                  const SizedBox(height: 15),
+
+                  // Catégorie
+                  _detailRow('Catégorie', product['category'] ?? '-'),
+
+                  // Stock actuel
+                  _detailRow('Stock actuel', '${product['stock'] ?? 0}'),
+
+                  // Seuil d’alerte
+                  _detailRow('Seuil alerte', '${product['alertThreshold'] ?? 0}'),
+
+                  // Prix HT
+                  _detailRow('Prix HT', '${product['priceHT'] ?? 0}'),
+
+                  // Statut
+                  _detailRow('Statut', (product['active'] ?? true) ? 'Actif' : 'Archivé'),
+
+                  const Spacer(),
+
+                  // Bouton Modifier
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddEditProductScreen(
+                              title: 'Modifier produit',
+                              entity: product,
+                              onSave: (data) {
+                                print('Produit modifié: $data');
+                              },
+                            ),
+                          ),
+                        );
+                        if (result != null) {
+                          // TODO: Mettre à jour le produit
+                        }
+                      },
+                      child: const Text(
+                        'Modifier',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    bool isLowStock = product.quantity < 10;
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        actions: [
-          // Bouton d'édition
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AddEditProductScreen(product: product)),
-              );
-            },
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style:
+            const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
-          // Bouton de suppression simulé
-          IconButton(
-            icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
-            onPressed: () {
-              // Action de suppression
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Suppression de ${product.name} (simulée).')),
-              );
-              Navigator.pop(context); // Retour à la liste après suppression
-            },
+          Text(
+            value,
+            style:
+            const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Indicateur de stock en haut
-            Card(
-              color: isLowStock ? Colors.red.shade50 : Colors.white,
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Stock Actuel:',
-                      style: TextStyle(fontSize: 18, color: secondaryColor, fontWeight: FontWeight.bold),
-                    ),
-                    Row(
-                      children: [
-                        if (isLowStock)
-                          Icon(Icons.warning_rounded, color: Colors.redAccent, size: 28),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${product.quantity} unités',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: isLowStock ? Colors.redAccent : primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // Détails du produit
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: primaryColor.withOpacity(0.1), blurRadius: 10, offset: Offset(0, 5)),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Informations Clés',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor),
-                  ),
-                  const Divider(height: 25, color: Colors.black12),
-
-                  _buildInfoRow('Nom du produit', product.name, Icons.label_important),
-                  _buildInfoRow('Code SKU', product.sku, Icons.qr_code_2),
-                  _buildInfoRow('Prix unitaire', '${product.price.toStringAsFixed(2)} €', Icons.monetization_on),
-
-                  // Description
-                  const SizedBox(height: 15),
-                  Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: secondaryColor.withOpacity(0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    product.description ?? 'Aucune description fournie.',
-                    style: TextStyle(fontSize: 16, color: primaryColor),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
