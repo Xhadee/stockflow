@@ -1,178 +1,190 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class AlertsScreen extends StatelessWidget {
-  static const String routeName = '/alerts';
-
-  AlertsScreen({super.key});
-
-  // Palette StockFlow
-  final Color primaryColor = const Color(0xFF18534F);
-  final Color secondaryColor = const Color(0xFF226D68);
-  final Color backgroundColor = const Color(0xFFECF8F6);
-  final Color accentColor = const Color(0xFFFEEAA1);
-  final Color buttonColor = const Color(0xFFD6955B);
-
-  // Données mockées : produits avec stock faible
-  final List<Map<String, dynamic>> lowStockProducts = const [
-    {'name': 'Produit A', 'stock': 3, 'threshold': 5},
-    {'name': 'Produit B', 'stock': 1, 'threshold': 5},
-    {'name': 'Produit C', 'stock': 2, 'threshold': 5},
-  ];
+class AlertsScreen extends ConsumerWidget {
+  const AlertsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        title: const Text('Alertes Stock Faible'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: primaryColor,
+        backgroundColor: Colors.white,
         elevation: 0,
-      ),
-      body: Stack(
-        children: [
-          // 🎨 Décoration arrière-plan
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.35),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Description
-                  Text(
-                    'Produits dont le stock est inférieur au seuil défini',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: secondaryColor.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Liste
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: lowStockProducts.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final product = lowStockProducts[index];
-                        return _LowStockCard(
-                          name: product['name'],
-                          stock: product['stock'],
-                          threshold: product['threshold'],
-                          primaryColor: primaryColor,
-                          secondaryColor: secondaryColor,
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LowStockCard extends StatelessWidget {
-  final String name;
-  final int stock;
-  final int threshold;
-  final Color primaryColor;
-  final Color secondaryColor;
-
-  const _LowStockCard({
-    required this.name,
-    required this.stock,
-    required this.threshold,
-    required this.primaryColor,
-    required this.secondaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withOpacity(0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Icone produit
+        scrolledUnderElevation: 0,
+        title: const Text(
+          "Alertes de Stock",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+          onPressed: () => context.pop(),
+        ),
+        // Petit badge indiquant le nombre total d'alertes
+        actions: [
           Container(
-            width: 48,
-            height: 48,
+            margin: const EdgeInsets.only(right: 16, top: 12, bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: secondaryColor.withOpacity(0.15),
-              shape: BoxShape.circle,
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(Icons.inventory_2, color: secondaryColor),
-          ),
-          const SizedBox(width: 16),
-
-          // Infos
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Center(
+              child: Text(
+                "5 Alertes",
+                style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+          )
+        ],
+      ),
+      body: Column(
+        children: [
+          // Bannière d'information
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.orange.shade50,
+            child: Row(
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Stock actuel: $stock (Seuil: $threshold)',
-                  style: TextStyle(
-                    color: secondaryColor.withOpacity(0.8),
-                    fontSize: 14,
+                Icon(Icons.info_outline, color: Colors.orange.shade800, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Ces produits ont atteint ou sont en dessous de leur seuil d'alerte.",
+                    style: TextStyle(color: Colors.orange.shade900, fontSize: 13),
                   ),
                 ),
               ],
             ),
           ),
 
-          // Badge alerte
-          Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.redAccent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'FAIBLE',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
+          // Liste des alertes
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 5, // À remplacer par vos données réelles
+              itemBuilder: (context, index) {
+                return _buildAlertCard(
+                  context,
+                  productName: "Clavier Mécanique RGB",
+                  currentStock: 3,
+                  threshold: 10,
+                  lastMovement: "il y'a 2 heures",
+                );
+              },
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlertCard(
+      BuildContext context, {
+        required String productName,
+        required int currentStock,
+        required int threshold,
+        required String lastMovement,
+      }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icône d'alerte
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 24),
+              ),
+              const SizedBox(width: 16),
+              // Infos produit
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      productName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Dernière sortie : $lastMovement",
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Indicateur de niveau de stock
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Stock Actuel", style: TextStyle(color: Colors.grey, fontSize: 11)),
+                  Text(
+                    "$currentStock unités",
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text("Seuil d'alerte", style: TextStyle(color: Colors.grey, fontSize: 11)),
+                  Text(
+                    "$threshold unités",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          // Actions rapides
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () {
+                  // Navigation vers la page de mouvement pour réapprovisionner
+                  context.push('/add-movement');
+                },
+                icon: const Icon(Icons.add_business_outlined, size: 18),
+                label: const Text("Réapprovisionner"),
+                style: TextButton.styleFrom(foregroundColor: const Color(0xFF2A85FF)),
+              ),
+            ],
+          )
         ],
       ),
     );

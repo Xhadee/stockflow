@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:stockflow/screens/auth/home_screen.dart';
-import 'package:stockflow/screens/auth/welcome_screen.dart';
-import 'package:stockflow/screens/customer/customer_detail_screen.dart';
-import 'package:stockflow/screens/customer/customer_list_screen.dart';
-import 'package:stockflow/screens/dashboard/dashboard_screen.dart';
-import 'package:stockflow/screens/inventory/movement_list_screen.dart';
-import 'package:stockflow/screens/order/add_edit_order_screen.dart';
-import 'package:stockflow/screens/organization/add_edit_organization_screen.dart';
-import 'package:stockflow/widgets/movement_card.dart';
-import 'screens/auth//login_screen.dart';
-import 'package:stockflow/screens/products/product_list_screen.dart';
-import 'package:stockflow/screens/order/order_list_screen.dart';
-import 'package:stockflow/screens/organization/organization_list_screen.dart';
-import 'package:stockflow/screens/settings/settings_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'config/router.dart';
 
 void main() {
-  runApp(const StockFlowApp());
+  runApp(const ProviderScope(
+      child: StockFlowApp(),
+  )
+  );
 }
 
-class StockFlowApp extends StatelessWidget {
+class StockFlowApp extends ConsumerWidget {
   const StockFlowApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'StockFlow',
-      theme: ThemeData(useMaterial3: true),
-      home:  DashboardScreen(),
+      theme: ThemeData(
+          useMaterial3: true,
+        textTheme: GoogleFonts.poppinsTextTheme(
+          Theme.of(context).textTheme,
+        ),),
+      routerConfig: router,
     );
   }
 }

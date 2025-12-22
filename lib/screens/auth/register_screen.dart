@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:stockflow/screens/auth/welcome_screen.dart';
 import 'login_screen.dart';
-import 'home_screen.dart';
+import '../layout/layout.dart';
 
 class RegisterScreen extends StatefulWidget {
   static const String routeName = '/register';
@@ -262,7 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               // Logique d'inscription (simulée)
                               Navigator.pushReplacement(
                                 context,
-                                MaterialPageRoute(builder: (_) => HomeScreen()),
+                                MaterialPageRoute(builder: (_) => WelcomeScreen()),
                               );
                             }
                           },

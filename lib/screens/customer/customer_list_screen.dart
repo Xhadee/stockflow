@@ -1,119 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stockflow/widgets/build_header.dart';
 
-import '../../widgets/customer_card.dart';
+import '../../widgets/customer_widgets/build_customer_card.dart';
 
-class CustomerListScreen extends StatelessWidget {
-  static const String routeName = '/customers';
-
-  // Palette (identique à toute l’app)
-  final Color primaryColor = const Color(0xFF18534F);
-  final Color secondaryColor = const Color(0xFF226D68);
-  final Color backgroundColor = const Color(0xFFECF8F6);
-  final Color accentColor = const Color(0xFFFEEAA1);
-  final Color buttonColor = const Color(0xFFD6955B);
-
+class CustomerListScreen extends ConsumerStatefulWidget {
   const CustomerListScreen({super.key});
 
-  // 🔹 Données mockées (remplacées plus tard par Firestore)
-  final List<Map<String, String>> customers = const [
-    {
-      'name': 'Boutique Ndiaye',
-      'phone': '+221 77 123 45 67',
-      'email': 'ndiaye@boutique.sn',
-    },
-    {
-      'name': 'Marché Central',
-      'phone': '+221 76 456 78 90',
-      'email': 'contact@marche.sn',
-    },
-    {
-      'name': 'Super Shop Dakar',
-      'phone': '+221 78 987 65 43',
-      'email': 'info@supershop.sn',
-    },
-  ];
+  @override
+  ConsumerState<CustomerListScreen> createState() => _CustomerListScreenState();
+}
+
+class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
-
-      // ➕ Bouton flottant
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: buttonColor,
-        onPressed: () {
-          // TODO: Navigation vers AddEditCustomerScreen
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-
-      body: Stack(
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: Column(
         children: [
-          // 🎨 Décoration arrière-plan
-          Positioned(
-            bottom: -120,
-            left: -120,
-            child: Container(
-              width: 260,
-              height: 260,
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.35),
-                shape: BoxShape.circle,
+          buildHeader(
+              "Listes des clients",
+              "Gerez vos clients et consultez leurs commades"),
+          // Barre de recherche
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                  hintText: "Rechercher un client...",
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
               ),
+                  onChanged: (value) {
+              // Logique de filtrage via Riverpod
+            },
             ),
           ),
 
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 🧑‍🤝‍🧑 En-tête
-                  Text(
-                    'Clients',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      color: primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Gérez vos clients et leurs informations',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: secondaryColor.withOpacity(0.7),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // 📋 Liste des clients
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: customers.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final customer = customers[index];
-                        return CustomerCard(
-                          name: customer['name']!,
-                          phone: customer['phone']!,
-                          email: customer['email']!,
-                          primaryColor: primaryColor,
-                          secondaryColor: secondaryColor,
-
-                        );
-                      },
-
-                    ),
-                  ),
-                ],
-              ),
+          // Liste des clients
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: 10, // Remplacer par la longueur de votre liste data
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return buildCustomerCard(
+                  context,
+                  name: "Papa Samour DIOP",
+                  phone: "+221 77 000 00 $index",
+                  totalOrders: index + 2,
+                  id: "id_$index",
+                );
+              },
             ),
           ),
         ],
       ),
+      // Bouton pour ajouter un client
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF2A85FF),
+        onPressed: () => context.push('/add-customer'),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
+
+
 }

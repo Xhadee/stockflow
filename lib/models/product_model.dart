@@ -1,4 +1,4 @@
-class Product {
+class ProductModel {
   final String id;
   final String name;
   final double price;
@@ -7,7 +7,7 @@ class Product {
   final String? description;
   final String? imageUrl; // Pour les futures évolutions
 
-  Product({
+  ProductModel({
     required this.id,
     required this.name,
     required this.price,
@@ -31,8 +31,8 @@ class Product {
   }
 
   // Méthode pour créer un objet Product à partir d'une Map
-  factory Product.fromMap(Map<String, dynamic> map) {
-    return Product(
+  factory ProductModel.fromMap(Map<String, dynamic> map) {
+    return ProductModel(
       id: map['id'] ?? '',
       name: map['name'] ?? 'Produit Inconnu',
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
@@ -44,7 +44,7 @@ class Product {
   }
 
   // Ajout de la fonction copyWith pour faciliter les mises à jour (utile dans l'écran d'édition)
-  Product copyWith({
+  ProductModel copyWith({
     String? id,
     String? name,
     double? price,
@@ -53,7 +53,7 @@ class Product {
     String? description,
     String? imageUrl,
   }) {
-    return Product(
+    return ProductModel(
       id: id ?? this.id,
       name: name ?? this.name,
       price: price ?? this.price,
