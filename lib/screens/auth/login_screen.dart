@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stockflow/providers/user_provider.dart';
+import 'package:stockflow/screens/auth/welcome_screen.dart';
+import 'package:stockflow/screens/dashboard/dashboard_screen.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
-import 'home_screen.dart';
+import '../layout/layout.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String routeName = '/login';
@@ -184,11 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              // Utilisation des routes nommées est recommandée : Navigator.pushNamed(context, ForgotPasswordScreen.routeName);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => ForgotPasswordScreen()),
-                              );
+                              context.go('/forgot-password');
                             },
                             child: Text(
                               'Mot de passe oublié ?',
@@ -212,10 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               // Logique de connexion (simulée)
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (_) => HomeScreen()),
-                              );
+                              context.go('/dashboard');
                             }
                           },
                           child: Text(
@@ -235,11 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                // Utilisation des routes nommées est recommandée : Navigator.pushNamed(context, RegisterScreen.routeName);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => RegisterScreen()),
-                                );
+                                context.go('/register');
                               },
                               child: Text(
                                 "S'inscrire ici",

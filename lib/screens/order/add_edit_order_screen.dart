@@ -1,205 +1,194 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class AddEditOrderScreen extends StatefulWidget {
-  static const String routeName = '/add-edit-order';
-
-  final Map<String, dynamic>? order; // null si création
-
-  const AddEditOrderScreen({super.key, this.order});
+class AddEditOrderScreen extends ConsumerStatefulWidget {
+  final String? orderId;
+  const AddEditOrderScreen({super.key, this.orderId});
 
   @override
-  State<AddEditOrderScreen> createState() => _AddEditOrderScreenState();
+  ConsumerState<AddEditOrderScreen> createState() => _AddEditOrderScreenState();
 }
 
-class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
-  final _formKey = GlobalKey<FormState>();
+class _AddEditOrderScreenState extends ConsumerState<AddEditOrderScreen> {
+  // Simulation d'une liste de produits sélectionnés
+  final List<Map<String, dynamic>> _selectedItems = [
+    {"name": "Clavier Mécanique", "price": 45000, "qty": 1},
+  ];
 
-  // Controllers
-  final TextEditingController _quantityController = TextEditingController();
-
-  // Palette StockFlow
-  final Color primaryColor = const Color(0xFF18534F);
-  final Color secondaryColor = const Color(0xFF226D68);
-  final Color backgroundColor = const Color(0xFFECF8F6);
-  final Color accentColor = const Color(0xFFFEEAA1);
-  final Color buttonColor = const Color(0xFFD6955B);
-
-  String _selectedClient = 'Client A';
-  String _selectedProduct = 'Produit A';
-  int _quantity = 1;
-
-  // Données mock
-  final List<String> _clients = ['Client A', 'Client B', 'Client C'];
-  final List<String> _products = ['Produit A', 'Produit B', 'Produit C'];
-
-  int _calculateTotal() {
-    // Mock : 10€ par unité
-    return _quantity * 10;
-  }
-
-  InputDecoration _inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: secondaryColor),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding:
-      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: primaryColor, width: 2),
-      ),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.order != null) {
-      _selectedClient = widget.order!['client'];
-      _selectedProduct = widget.order!['product'];
-      _quantity = widget.order!['quantity'];
-      _quantityController.text = _quantity.toString();
-    }
-  }
-
-  @override
-  void dispose() {
-    _quantityController.dispose();
-    super.dispose();
-  }
+  double get _totalAmount => _selectedItems.fold(0, (sum, item) => sum + (item['price'] * item['qty']));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        title: Text(widget.order == null ? 'Nouvelle commande' : 'Modifier commande'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: primaryColor,
+        title: Text(widget.orderId == null ? "Nouvelle Commande" : "Modifier Commande",
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: () => context.pop()),
+        actions: [
+          TextButton(
+            onPressed: () => _submitOrder(),
+            child: const Text("VALIDER", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2A85FF))),
+          )
+        ],
       ),
-      body: Stack(
+      body: Column(
         children: [
-          // Décoration
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.35),
-                shape: BoxShape.circle,
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle("Client"),
+                  const SizedBox(height: 8),
+                  _buildClientSelector(),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle("Produits"),
+                  const SizedBox(height: 8),
+                  ..._selectedItems.map((item) => _buildProductItem(item)).toList(),
+                  const SizedBox(height: 12),
+                  _buildAddProductButton(),
+                ],
               ),
             ),
           ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Client
-                    DropdownButtonFormField<String>(
-                      value: _selectedClient,
-                      decoration: _inputDecoration('Client', Icons.person),
-                      items: _clients
-                          .map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e),
-                      ))
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedClient = val);
-                      },
-                    ),
-                    const SizedBox(height: 20),
+          _buildSummarySection(),
+        ],
+      ),
+    );
+  }
 
-                    // Produit
-                    DropdownButtonFormField<String>(
-                      value: _selectedProduct,
-                      decoration: _inputDecoration('Produit', Icons.inventory_2),
-                      items: _products
-                          .map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e),
-                      ))
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedProduct = val);
-                      },
-                    ),
-                    const SizedBox(height: 20),
+  // Sélecteur de client
+  Widget _buildClientSelector() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(radius: 18, backgroundColor: Color(0xFFE3F2FD), child: Icon(Icons.person, size: 18)),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text("Choisir un client", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+          ),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.add_circle_outline, color: Color(0xFF2A85FF))),
+        ],
+      ),
+    );
+  }
 
-                    // Quantité
-                    TextFormField(
-                      controller: _quantityController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration('Quantité', Icons.confirmation_num),
-                      onChanged: (val) {
-                        setState(() {
-                          _quantity = int.tryParse(val) ?? 1;
-                        });
-                      },
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Veuillez entrer une quantité';
-                        if (int.tryParse(val) == null) return 'Quantité invalide';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 30),
-
-                    // Total
-                    Text(
-                      'Total : ${_calculateTotal()} €',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 30),
-
-                    // Bouton Enregistrer
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 6,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // TODO: Sauvegarder via BLoC / Firestore
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: const Text(
-                        'Enregistrer',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+  // Élément de produit dans la liste
+  Widget _buildProductItem(Map<String, dynamic> item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("${item['price']} FCFA", style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+              ],
             ),
+          ),
+          Row(
+            children: [
+              _qtyBtn(Icons.remove, () {}),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text("${item['qty']}", style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              _qtyBtn(Icons.add, () {}),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
+        child: Icon(icon, size: 18),
+      ),
+    );
+  }
+
+  Widget _buildAddProductButton() {
+    return InkWell(
+      onTap: () {}, // Ouvrir une boîte de dialogue ou une page de sélection de produits
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFF2A85FF), style: BorderStyle.solid),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, color: Color(0xFF2A85FF), size: 20),
+            SizedBox(width: 8),
+            Text("Ajouter un produit", style: TextStyle(color: Color(0xFF2A85FF), fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Résumé en bas de l'écran (Fixe)
+  Widget _buildSummarySection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+      ),
+      child: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Total à payer", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Text("${_totalAmount.toInt()} FCFA",
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
+              ],
+            ),
+            ElevatedButton(
+              onPressed: _submitOrder,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2A85FF),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("Valider", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16));
+  }
+
+  void _submitOrder() {
+    context.pop();
   }
 }

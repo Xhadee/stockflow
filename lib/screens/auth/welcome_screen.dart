@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -12,7 +13,7 @@ class WelcomeScreen extends StatelessWidget {
   final Color primaryColor = const Color(0xFF18534F); // Vert foncé principal
   final Color secondaryColor = const Color(0xFF226D68); // Vert moyen/foncé
   final Color backgroundColor = const Color(0xFFECF8F6); // Arrière-plan très clair
-  final Color accentColor = const Color(0xFFFEEAA1); // Jaune/Crème (pour la décoration)
+  // final Color accentColor = const Color(0xFFFEEAA1); // Jaune/Crème (pour la décoration)
   final Color buttonColor = const Color(0xFFD6955B); // Orange/Brun (pour les boutons)
 
   @override
@@ -33,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
               width: screenHeight * 0.5,
               height: screenHeight * 0.5,
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.4), // Couleur accent avec transparence
+                color: Colors.transparent.withOpacity(0.4), // Couleur accent avec transparence
                 shape: BoxShape.circle,
               ),
             ),
@@ -111,12 +112,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
-                          // Note: J'ai utilisé l'approche 'push' pour respecter votre code existant.
-                          // Utiliser les routes nommées (Navigator.pushNamed) est souvent préférable en Flutter.
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => LoginScreen()),
-                          );
+                          context.go('/login');
                         },
                         child: Text(
                           'Se connecter',
@@ -137,10 +133,7 @@ class WelcomeScreen extends StatelessWidget {
                           backgroundColor: Colors.transparent,
                         ),
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => RegisterScreen()),
-                          );
+                          context.go('/register');
                         },
                         child: Text(
                           "S'inscrire",
